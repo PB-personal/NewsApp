@@ -6,7 +6,6 @@ import React, { Component } from "react";
 
 
 export default class App extends Component {
-  pageSize = 20;
   render() {
     return (
       <Router>
@@ -17,7 +16,7 @@ export default class App extends Component {
               <News
                 key="general"
                 country="us"
-                pageSize={this.pageSize}
+                pageSize={5}
                 category="general"
               />
             </Route>
@@ -25,7 +24,7 @@ export default class App extends Component {
               <News
                 key="general"
                 country="us"
-                pageSize={this.pageSize}
+                pageSize={5}
                 category="general"
               />
             </Route>
@@ -63,7 +62,7 @@ export default class App extends Component {
               <News
                 key="technology"
                 country="us"
-                pageSize={5}
+                pageSize={20}
                 category="technology"
               />
             </Route>

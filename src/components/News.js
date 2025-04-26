@@ -2,7 +2,7 @@ import React, { Component } from "react";
 import NewsItem from "./NewsItem";
 import Spinner from "./Spinner";
 import PropTypes from "prop-types";
-
+import InfiniteScroll from "react-infinite-scroll-component";
 export class News extends Component {
   static defaultProps = {
     category: "general",
@@ -13,25 +13,23 @@ export class News extends Component {
   };
 
   nextResult;
-  constructor() {
-    super();
+  constructor(props) {
+    super(props);
     this.state = {
       articles: [],
       page: 1,
       loading: false,
+      totalResults: 0,
     };
+    document.title = `${this.doUpperCase(this.props.category)} - Top headlines`;
   }
 
   async componentDidMount() {
     this.updateNews();
   }
 
-  async updateNews () {
-    const url = `https://newsapi.org/v2/top-headlines?country=${
-        this.props.country
-      }&category=${
-        this.props.category
-      }&apiKey=e7079cdf954d439dbf9a1d931bd1bb50&page=${this.state.page}&pageSize=${this.props.pageSize}`;
+  async updateNews() {
+    const url = `https://newsapi.org/v2/top-headlines?country=${this.props.country}&category=${this.props.category}&apiKey=e7079cdf954d439dbf9a1d931bd1bb50&page=${this.state.page}&pageSize=${this.props.pageSize}`;
 
     this.setState({ loading: true });
 
@@ -45,45 +43,74 @@ export class News extends Component {
     });
   }
 
-
   handlePreviousClick = async () => {
-   this.setState({page: this.state.page - 1});
-   this.updateNews();
-  };
-  
-  handleNextClick = async () => {
-    await this.setState({page: this.state.page + 1})
+    this.setState({ page: this.state.page - 1 });
     this.updateNews();
+  };
+
+  handleNextClick = async () => {
+    await this.setState({ page: this.state.page + 1 });
+    this.updateNews();
+  };
+
+  doUpperCase(string) {
+    return string.charAt(0).toUpperCase() + string.slice(1);
+  }
+
+  fetchMoreData = async () => {
+    this.setState({ page: this.state.page + 1 });
+    const url = `https://newsapi.org/v2/top-headlines?country=${this.props.country}&category=${this.props.category}&apiKey=e7079cdf954d439dbf9a1d931bd1bb50&page=${this.state.page}&pageSize=${this.props.pageSize}`;
+
+    this.setState({ loading: true });
+
+    let data = await fetch(url);
+    let parsedData = await data.json();
+    console.log(parsedData);
+    this.setState({
+      articles: this.state.articles.concat(parsedData.articles),
+      totalResults: parsedData.totalResults,
+      loading: false,
+    });
+    // this.updateNews();
   };
   render() {
     console.log("render");
     return (
-      <div className="container my-3">
-        <h2 className="text-center my-4">
-          <strong>NewsMonkey - Top headlines</strong>
-        </h2>
-        {this.state.loading && <Spinner />}
-        <div className="row gy-5">
-          {!this.state.loading &&
-            this.state.articles.map((elem) => {
-              return (
-                <div className="col-md-4">
-                  <NewsItem
-                    key={elem.urlToImage}
-                    title={elem.title ? elem.title : ""}
-                    description={elem.description ? elem.description : ""}
-                    urlToImage={elem.urlToImage}
-                    url={elem.url}
-                    author={elem.author}
-                    date={elem.publishedAt}
-                    source={elem.source}
-                  />
-                </div>
-              );
-            })}
-        </div>
+      <>
+        <h1 className="text-center my-3">
+          NewsMonkey - Top {this.doUpperCase(this.props.category)} headlines
+        </h1>
+        {/* {this.state.loading && <Spinner />} */}
+        <InfiniteScroll
+          dataLength={this.state.articles.length}
+          next={this.fetchMoreData}
+          hasMore={this.state.articles.length !== this.state.totalResults}
+          loader={this.state.loading && <Spinner />}
+          scrollableTarget="scrollableDiv"
+        >
+          <div className="container my-3">
+            <div className="row">
+              {this.state.articles.map((elem) => {
+                return (
+                  <div className="col-md-4" key={elem.urlToImage}>
+                    <NewsItem
+                      title={elem.title ? elem.title : ""}
+                      description={elem.description ? elem.description : ""}
+                      urlToImage={elem.urlToImage}
+                      url={elem.url}
+                      author={elem.author}
+                      date={elem.publishedAt}
+                      source={elem.source}
+                    />
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+        </InfiniteScroll>
+      </>
 
-        <div className="container d-flex justify-content-between">
+      /* <div className="container d-flex justify-content-between">
           <button
             disabled={this.state.page <= 1}
             className="btn btn-dark"
@@ -101,8 +128,7 @@ export class News extends Component {
           >
             Next &rarr;
           </button>
-        </div>
-      </div>
+        </div> */
     );
   }
 }
